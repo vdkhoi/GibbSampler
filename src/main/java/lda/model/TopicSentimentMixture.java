@@ -156,7 +156,6 @@ public class TopicSentimentMixture {
 				}
 			}
 		}
-
 		buildMatrices();
 	}	
 
@@ -200,8 +199,8 @@ public class TopicSentimentMixture {
 		
 		if (x  == 1) {
 			xEqual1OfWord[word] -= 1;
-			p[0] = ((totalWordByX[1] + sigma) / (totalWordInstance + Two_Sigma))
-				* ((xEqual1OfWord[word] + beta) / (totalWordByX[1] + Word_Beta));
+			p[0] = ((totalWordByX[x] + sigma) / (totalWordInstance + Two_Sigma))
+				* ((xEqual1OfWord[word] + beta) / (totalWordByX[x] + Word_Beta));
 			xEqual1OfWord[word] += 1;
 		}
 		else {
@@ -209,19 +208,19 @@ public class TopicSentimentMixture {
 			doc_y_topic_matrix[m][y][z] -= 1;
 			totalWordInTopicByY[z][y] -= 1;
 			for (int k = 0; k < K; k++) {
-				p[3 * k + 1] = ((totalWordByX[0] + sigma) / (V - 1 + Two_Sigma))
-						* ((doc_topic_matrix[m][k] + alpha) / (totalWordInDocByX[m][0] + Topic_Alpha))
-						* ((doc_y_topic_matrix[m][0][k] + mu) / (totalWordInDocByX[m][0] + Three_Mu))
+				p[3 * k + 1] = ((totalWordByX[x] + sigma) / (totalWordInstance + Two_Sigma))
+						* ((doc_topic_matrix[m][k] + alpha) / (totalWordInDocByX[m][x] + Topic_Alpha))
+						* ((doc_y_topic_matrix[m][0][k] + mu) / (totalWordInDocByX[m][x] + Three_Mu))
 						* ((topic_y_word_matrix[k][0][word] + beta) / (totalWordInTopicByY[k][0] + Word_Beta));
 	
-				p[3 * k + 2] = ((totalWordByX[0] + sigma) / (V - 1 + Two_Sigma))
-						* ((doc_topic_matrix[m][k] + alpha) / (totalWordInDocByX[m][0] + Topic_Alpha))
-						* ((doc_y_topic_matrix[m][1][k] + mu) / (totalWordInDocByX[m][0] + Three_Mu))
+				p[3 * k + 2] = ((totalWordByX[x] + sigma) / (totalWordInstance + Two_Sigma))
+						* ((doc_topic_matrix[m][k] + alpha) / (totalWordInDocByX[m][x] + Topic_Alpha))
+						* ((doc_y_topic_matrix[m][1][k] + mu) / (totalWordInDocByX[m][x] + Three_Mu))
 						* ((topic_y_word_matrix[k][1][word] + beta) / (totalWordInTopicByY[k][1] + Word_Beta));
 	
-				p[3 * k + 3] = ((totalWordByX[0] + sigma) / (V - 1 + Two_Sigma))
-						* ((doc_topic_matrix[m][k] + alpha) / (totalWordInDocByX[m][0] + Topic_Alpha))
-						* ((doc_y_topic_matrix[m][2][k] + mu) / (totalWordInDocByX[m][0] + Three_Mu))
+				p[3 * k + 3] = ((totalWordByX[x] + sigma) / (totalWordInstance + Two_Sigma))
+						* ((doc_topic_matrix[m][k] + alpha) / (totalWordInDocByX[m][x] + Topic_Alpha))
+						* ((doc_y_topic_matrix[m][2][k] + mu) / (totalWordInDocByX[m][x] + Three_Mu))
 						* ((topic_y_word_matrix[k][2][word] + beta) / (totalWordInTopicByY[k][2] + Word_Beta));
 				
 				topic_y_word_matrix[z][y][word] += 1;
@@ -331,7 +330,7 @@ public class TopicSentimentMixture {
 			}
 		}
 		
-		System.out.println("Lamda: p(x=0)=" + lambda[0]  + "\tp(x=1)=" + lambda[1]);
+		System.out.println("Lamda: p(x=0)=" + lambda[0] + "\tp(x=1)=" + lambda[1]);
 		
 
 	}
@@ -413,6 +412,18 @@ public class TopicSentimentMixture {
 	}
 	
 	public ArrayList<ArrayList<Pair>> prepare_data() {
+//		int[][] example = { 
+//				{ 1, 0, 1, 0, 0 }, 				// romeo
+//				{ 1, 1, 0, 0, 0 }, 				// juliet
+//				{ 0, 1, 0, 0, 0 }, 				// happy
+//				{ 0, 1, 1, 0, 0 }, 				// dagger
+//				{ 0, 0, 0, 1, 0 }, 				// live
+//				{ 0, 0, 1, 1, 0 }, 				// die
+//				{ 0, 0, 0, 1, 0 }, 				// free
+//				{ 0, 0, 0, 1, 1 },				// new-hamsphire
+//		};
+		
+		
 		ArrayList<ArrayList<Pair>> doc_vector = new ArrayList<ArrayList<Pair>>();
 		ArrayList<Pair> doc0 = new ArrayList<Pair>();
 		doc0.add(new Pair(0, 1));
@@ -442,16 +453,7 @@ public class TopicSentimentMixture {
 	}
 
 	public static void main(String[] args) {
-		int[][] example = { 
-				{ 1, 0, 1, 0, 0 }, 				// romeo
-				{ 1, 1, 0, 0, 0 }, 				// juliet
-				{ 0, 1, 0, 0, 0 }, 				// happy
-				{ 0, 1, 1, 0, 0 }, 				// dagger
-				{ 0, 0, 0, 1, 0 }, 				// live
-				{ 0, 0, 1, 1, 0 }, 				// die
-				{ 0, 0, 0, 1, 0 }, 				// free
-				{ 0, 0, 0, 1, 1 }, 				// new-hamsphire
-		};
+
 		
 		
 		TopicSentimentMixture model = new TopicSentimentMixture();
@@ -460,7 +462,7 @@ public class TopicSentimentMixture {
 		model.initialize_new(load_data.getDocs(), 200, 4451);
 //		model.initialize_new(model.prepare_data(), 2, 8);
 		
-		model.estimate(100000);
+		model.estimate(100);
 		model.writeModels();
 //		model.printModel();
 		

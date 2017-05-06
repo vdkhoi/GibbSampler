@@ -20,17 +20,17 @@ public class LoadDocsFromFile {
 			String line_of_doc;
 			String[] components;
 			String[] word_data;
-			ArrayList<Pair> doc_content = new ArrayList<Pair>();
+			ArrayList<Pair> doc_content ;
 			docs = new ArrayList<ArrayList<Pair>>();
 
 			while ((line_of_doc = br.readLine()) != null) {
 				components = line_of_doc.split(" ");
+				doc_content = new ArrayList<Pair>();
 				for (int i = 1; i < components.length; i ++) {
 					word_data = components[i].split(":", 2);
 					doc_content.add(new Pair(Integer.parseInt(word_data[0]), Integer.parseInt(word_data[1])));
 				}
 				docs.add(doc_content);
-				doc_content.clear();
 			}
 			
 			System.out.println("Finish loading...");
