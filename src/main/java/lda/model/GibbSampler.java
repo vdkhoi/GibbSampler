@@ -55,7 +55,7 @@ public class GibbSampler {
 	double Topic_Alpha;
 
 	ArrayList<Pair>[] topicOfWordInDoc;
-	int[] topicOfDoc;
+
 
 	int[][] topic_word_matrix; // Frequency Matrix of topic-word
 	int[][] doc_topic_matrix; // Frequency Matrix of doc-topic
@@ -71,7 +71,6 @@ public class GibbSampler {
 		K = num_topic;
 		this.phi = new double[K][V];
 		this.theta = new double[M][K];
-		this.topicOfDoc = new int[M];
 		this.topicOfWordInDoc = new ArrayList[M];
 		this.topic_word_matrix = new int[K][V];
 		this.doc_topic_matrix = new int[M][K];
@@ -82,8 +81,7 @@ public class GibbSampler {
 		Word_Beta = V * beta;
 		Topic_Alpha = K * alpha;
 		for (int m = 0; m < M; m++) {
-			int topic = (int) Math.floor(Math.random() * K);
-			topicOfDoc[m] = topic;
+			int topic;
 			topicOfWordInDoc[m] = new ArrayList<Pair>();
 			for (int v = 0; v < V; v++) {
 				for (int count = 0; count < docFreqMatrix[v][m]; count++) {
@@ -105,7 +103,6 @@ public class GibbSampler {
 		K = num_topic;
 		this.phi = new double[K][V];
 		this.theta = new double[M][K];
-		this.topicOfDoc = new int[M];
 		this.topicOfWordInDoc = new ArrayList[M];
 		this.topic_word_matrix = new int[K][V];
 		this.doc_topic_matrix = new int[M][K];
@@ -117,8 +114,7 @@ public class GibbSampler {
 		Topic_Alpha = K * alpha;
 
 		for (int m = 0; m < M; m++) {
-			int topic = (int) Math.floor(Math.random() * K);
-			topicOfDoc[m] = topic;
+			int topic;
 			topicOfWordInDoc[m] = new ArrayList<Pair>();
 			for (int word_in_doc = 0; word_in_doc < docFreqMatrix[m].size(); word_in_doc++) {
 				Pair word_frequency = docFreqMatrix[m].get(word_in_doc);
@@ -159,7 +155,7 @@ public class GibbSampler {
 		doc_len[m] -= 1;
 
 		for (int k = 0; k < K; k++) {
-			p[k] = ((topic_word_matrix[k][word] + beta) / (topic_len[topic] + Word_Beta))
+			p[k] = ((topic_word_matrix[k][word] + beta) / (topic_len[k] + Word_Beta))
 					* ((doc_topic_matrix[m][k] + alpha) / (doc_len[m] + Topic_Alpha));
 		}
 
@@ -200,9 +196,9 @@ public class GibbSampler {
 	}
 
 	public void estimate(int num_iteration) {
-		for (int iter = 0; iter < num_iteration; iter++) {
-			for (int m = 0; m < M; m++) {
-				for (int n = 0; n < topicOfWordInDoc[m].size(); n++) {
+		for (int iter = 0; iter < num_iteration; iter++) {  // Run iteration
+			for (int m = 0; m < M; m++) {                   // Traverse on M documents
+				for (int n = 0; n < topicOfWordInDoc[m].size(); n++) {  
 					sampling(m, n);
 				}
 			}
