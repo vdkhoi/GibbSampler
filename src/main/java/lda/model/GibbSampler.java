@@ -241,11 +241,12 @@ public class GibbSampler {
 	
 	public ArrayList<Pair>[] prepare_data() {
 		ArrayList<Pair>[] doc_vector = new ArrayList[5];
-		Pair[] doc0 = {new Pair(1,0), new Pair(1,2)};  					//Left: frequency. Right: word
-		Pair[] doc1 = {new Pair(1,1), new Pair(1,2), new Pair(1,3)};  	//Left: frequency. Right: word
-		Pair[] doc2 = {new Pair(1,0), new Pair(1,3), new Pair(1,5)};                 					//Left: frequency. Right: word
-		Pair[] doc3 = {new Pair(1,4), new Pair(1,5), new Pair(1,6), new Pair(1,7)};  					//Left: frequency. Right: word
-		Pair[] doc4 = {new Pair(1,7)};                 					//Left: frequency. Right: word
+		//Pair<Left, Right>: Left is frequency. Right´is word
+		Pair[] doc0 = {new Pair(1,0), new Pair(1,2)};  					
+		Pair[] doc1 = {new Pair(1,1), new Pair(1,2), new Pair(1,3)};  	
+		Pair[] doc2 = {new Pair(1,0), new Pair(1,3), new Pair(1,5)};                 
+		Pair[] doc3 = {new Pair(1,4), new Pair(1,5), new Pair(1,6), new Pair(1,7)};  
+		Pair[] doc4 = {new Pair(1,7)};
 
 		doc_vector[0] = new ArrayList<Pair>(Arrays.asList(doc0));
 		doc_vector[1] = new ArrayList<Pair>(Arrays.asList(doc1));
@@ -270,10 +271,11 @@ public class GibbSampler {
 		
 		
 		GibbSampler model = new GibbSampler();
-
-		//model.initialize(example, 2);
+		
 		
 		model.initialize_new(model.prepare_data(), 2, 8);
+//		or
+//		model.initialize_new(example, 2, 8);
 		
 		model.estimate(1000);
 		model.printModel();

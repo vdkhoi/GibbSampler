@@ -5,8 +5,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.*;
 
-//This code base on "Topic Sentiment Mixture: Modeling facets and Opinions in Weblogs"
-
 //class Pair {
 //
 //	private final Integer left;
@@ -94,8 +92,8 @@ public class TopicSentimentMixture {
 
 	double[][][] phi; // Phi distribution: topic-word
 	double[][] theta; // Theta distribution: doc-topic
-	double[] lambda;
-	double[][][] delta;
+	double[] lambda;  // Lambda distribution: X coin
+	double[][][] delta; // Delta distribution: Y coin
 
 	double Word_Beta;
 	double Topic_Alpha;
@@ -186,8 +184,9 @@ public class TopicSentimentMixture {
 		System.out.println("Matrix building is finished");
 	}
 
-	private void sampling(int m, int n) { // compute on topic_y_word_matrix and
-											// doc_y_topic_matrix variables
+	private void sampling(int m, int n) { 
+		// compute on topic_y_word_matrix and
+		// doc_y_topic_matrix variables
 		int word = dataOfWordInDoc[m].get(n).getWord();
 		byte x = dataOfWordInDoc[m].get(n).getX();
 		byte y = dataOfWordInDoc[m].get(n).getY();
@@ -208,6 +207,9 @@ public class TopicSentimentMixture {
 			doc_y_topic_matrix[m][y][z] -= 1;
 			totalWordInTopicByY[z][y] -= 1;
 			for (int k = 0; k < K; k++) {
+				
+				// Compute p[] three times is faster than using an inner loop for y 
+				
 				p[3 * k + 1] = ((totalWordByX[x] + sigma) / (totalWordInstance + Two_Sigma))
 						* ((doc_topic_matrix[m][k] + alpha) / (totalWordInDocByX[m][x] + Topic_Alpha))
 						* ((doc_y_topic_matrix[m][0][k] + mu) / (totalWordInDocByX[m][x] + Three_Mu))
@@ -335,12 +337,10 @@ public class TopicSentimentMixture {
 
 	}
 	
-	void writeTheta(){
+	public void writeTheta(String file){
 		try {
 			BufferedWriter bw = new BufferedWriter(
-				new FileWriter(
-					new File(
-						"E:\\OneDrive\\With_TAnh\\models\\topic_sentiment_mixture\\theta.models")));
+				new FileWriter(new File(file)));
 			for (int m = 0; m < M; m++) {
 				for (int n = 0; n < K; n++) {
 					bw.write(theta[m][n] + " ");
@@ -353,12 +353,10 @@ public class TopicSentimentMixture {
 		}
 	}
 	
-	void writePhi(){
+	public void writePhi(String file){
 		try {
 			BufferedWriter bw = new BufferedWriter(
-				new FileWriter(
-					new File(
-						"E:\\OneDrive\\With_TAnh\\models\\topic_sentiment_mixture\\phi.models")));
+				new FileWriter(new File(file)));
 			for (int k = 0; k < K; k++) {
 				bw.write("\r\n");
 				for (int v = 0; v < V; v++) {
@@ -372,12 +370,10 @@ public class TopicSentimentMixture {
 		}
 	}
 
-	void writeDelta(){
+	public void writeDelta(String file){
 		try {
 			BufferedWriter bw = new BufferedWriter(
-				new FileWriter(
-					new File(
-						"E:\\OneDrive\\With_TAnh\\models\\topic_sentiment_mixture\\delta.models")));
+				new FileWriter(new File(file)));
 			for (int m = 0; m < M; m++) {
 				bw.write("\r\n");
 				for (int k = 0; k < K; k++) {
@@ -390,12 +386,10 @@ public class TopicSentimentMixture {
 		}
 	}
 
-	void writeLambda(){
+	public void writeLambda(String file){
 		try {
 			BufferedWriter bw = new BufferedWriter(
-				new FileWriter(
-					new File(
-						"E:\\OneDrive\\With_TAnh\\models\\topic_sentiment_mixture\\lambda.models")));
+				new FileWriter(new File(file)));
 			bw.write(lambda[0]  + "\t" + lambda[1]);
 			bw.close();
 		} catch (Exception e) {
@@ -404,14 +398,20 @@ public class TopicSentimentMixture {
 	}
 
 	
-	void writeModels() {
-		writeTheta();
-		writePhi();
-		writeDelta();
-		writeLambda();
+	public void writeModels(String path) {
+		writeTheta(path + "\\theta.models");
+		writePhi(path + "\\phi.models");
+		writeDelta(path + "\\delta.models");
+		writeLambda(path + "\\lambda.models");
 	}
 	
 	public ArrayList<ArrayList<Pair>> prepare_data() {
+//		String doc0 = "Romeo and Juliet";
+//		String doc1 = "Juliet: O happy dagger";
+//		String doc2 = "Romeo died by dagger";
+//		String doc3 = "\"Live free or die\", that's the new-Hampshire's motto";
+//		String doc4 = "Did you know, New-Hampsphire is in New-England";
+//		
 //		int[][] example = { 
 //				{ 1, 0, 1, 0, 0 }, 				// romeo
 //				{ 1, 1, 0, 0, 0 }, 				// juliet
@@ -423,6 +423,7 @@ public class TopicSentimentMixture {
 //				{ 0, 0, 0, 1, 1 },				// new-hamsphire
 //		};
 		
+		//Pair<Left, Right>: Left is word. Right´is frequency
 		
 		ArrayList<ArrayList<Pair>> doc_vector = new ArrayList<ArrayList<Pair>>();
 		ArrayList<Pair> doc0 = new ArrayList<Pair>();
@@ -443,7 +444,6 @@ public class TopicSentimentMixture {
 		doc3.add(new Pair(7, 1));  
 		ArrayList<Pair> doc4 = new ArrayList<Pair>();
 		doc4.add(new Pair(1,7));  
-
 		doc_vector.add(doc0);
 		doc_vector.add(doc1);
 		doc_vector.add(doc2);
@@ -457,18 +457,17 @@ public class TopicSentimentMixture {
 		
 		
 		TopicSentimentMixture model = new TopicSentimentMixture();
-		LoadDocsFromFile load_data = new LoadDocsFromFile("E:\\OneDrive\\With_TAnh\\collaborative_work\\data\\Bitterlemons.docs", "E:\\OneDrive\\With_TAnh\\collaborative_work\\data\\Bitterlemons.words");
+//		Change you path bellow
+		LoadDocsFromFile load_data = new LoadDocsFromFile("Bitterlemons.docs", "Bitterlemons.words");
 		load_data.load();
 		model.initialize_new(load_data.getDocs(), 200, 4451);
-//		model.initialize_new(model.prepare_data(), 2, 8);
+//		or
+//		model.initialize_new(model.prepare_data(), 2, 8); // This line using sample data
 		
 		model.estimate(100);
-		model.writeModels();
+//		Change you path bellow
+		model.writeModels("Path");
 //		model.printModel();
-		
-//		model.testQuery(0, 1);
-		
-//		model.testQuery(3, 5);
 	}
 
 }
