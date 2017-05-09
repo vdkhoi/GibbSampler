@@ -8,11 +8,10 @@ public class LoadDocsFromFile {
 	String dict_file;
 	ArrayList<ArrayList<Pair>> docs;
 	
-	ArrayList<HashMap<Integer, String>> dict;
+	String[] dict;
 	public LoadDocsFromFile(String docfile, String dictionary) {
 		doc_file = docfile;
 		dict_file = dictionary;
-		dict  = new ArrayList<HashMap<Integer,String>>();
 	}
 	public void load(){
 		try {
@@ -32,8 +31,30 @@ public class LoadDocsFromFile {
 				}
 				docs.add(doc_content);
 			}
+			br.close();
 			
-			System.out.println("Finish loading...");
+			System.out.println("Finish loading docs...");
+			
+			br = new BufferedReader(new FileReader(new File(dict_file)));
+			int num_of_line = 0;
+			while (br.readLine() != null) {
+				num_of_line++;
+			}
+			
+			dict = new String[num_of_line];
+			br = new BufferedReader(new FileReader(new File(dict_file)));
+			for(int i = 0; i < num_of_line; i ++) {
+				line_of_doc = br.readLine();
+				components = line_of_doc.split(" ", 2);
+				if (components.length == 2) {
+					dict[Integer.parseInt(components[0])] = components[1];
+				}
+				else {
+					dict[i] = components[0];
+				}	
+			}
+			br.close();
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -42,5 +63,9 @@ public class LoadDocsFromFile {
 	
 	public ArrayList<ArrayList<Pair>> getDocs(){
 		return docs;
+	}
+	
+	public String[] getWordDict(){
+		return dict;
 	}
 }

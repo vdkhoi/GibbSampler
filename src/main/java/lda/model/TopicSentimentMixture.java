@@ -101,6 +101,7 @@ public class TopicSentimentMixture {
 	double Three_Mu;
 
 	ArrayList<Triple>[] dataOfWordInDoc;
+	String[] wordDict;
 
 	int[][][] topic_y_word_matrix; // Frequency Matrix of topic-word
 	int[][][] doc_y_topic_matrix; // Frequency Matrix of doc-topic
@@ -115,8 +116,8 @@ public class TopicSentimentMixture {
 
 	double[] p; // Probability of topic K of current sampling word.
 	
-	public void initialize_new(ArrayList<ArrayList<Pair>> docFreqMatrix, int num_topic, int term_set_size) {
-		V = term_set_size;
+	public void initialize_new(ArrayList<ArrayList<Pair>> docFreqMatrix, int num_topic, String[] wordDictionary) {
+		V = wordDictionary.length;
 		M = docFreqMatrix.size();
 		K = num_topic;
 		this.xEqual1OfWord = new byte[V];
@@ -128,6 +129,7 @@ public class TopicSentimentMixture {
 		this.delta = new double[M][K][3];
 		this.lambda = new double[2];
 		this.dataOfWordInDoc = new ArrayList[M];
+		this.wordDict  = wordDictionary;
 		this.topic_y_word_matrix = new int[K][3][V];
 		this.doc_y_topic_matrix = new int[M][3][K];
 		this.doc_topic_matrix = new int[M][K];
@@ -396,6 +398,64 @@ public class TopicSentimentMixture {
 			e.printStackTrace();
 		}
 	}
+	
+	private int findMinIndex(int[] index_list, int k, int y){
+		double min = phi[k][index_list[0]][y];
+		int index = 0;
+		for (int i = 1; i < index_list.length; i++){
+			if (phi[k][index_list[i]][y] < min) {
+				min = phi[k][index_list[i]][y];
+				index = i;
+			}
+		}
+		return index;
+	}
+	
+	public void writeTopWord(String file, int num) {
+		try {
+			String[][][] top_words = new String[num][K][3];
+			for (int k = 0; k < K; k++) {
+				for (int y = 0; y < 3; y++) {
+					int[] index_of_num = new int[num];
+					for (int v = 0; v < num; v++) {
+						index_of_num[v] = v;
+					}
+
+					for (int v = num; v < V; v++) {
+						int min_idx = findMinIndex(index_of_num, k, y);
+						if (phi[k][v][y] > phi[k][index_of_num[min_idx]][y]) {
+							index_of_num[min_idx] = v;
+						}
+					}
+
+//					System.out.println("Topic k = " + k + " and y = " + y);
+					for (int v = 19; v > -1; v--) {
+						int min_idx = findMinIndex(index_of_num, k, y);
+						top_words[v][k][y] = wordDict[index_of_num[min_idx]]
+								+ "(" + index_of_num[min_idx] + "-"
+								+ phi[k][index_of_num[min_idx]][y] + ")";
+//						System.out.println(top_words[v][k][y]);
+						phi[k][index_of_num[min_idx]][y] = 10000000000.0;
+					}
+				}
+			}
+			
+			BufferedWriter bw = new BufferedWriter(new FileWriter(
+					new File(file)));
+			for (int v = 0; v < num; v++) {
+				for (int k = 0; k < K; k++) {
+					for (int y = 0; y < 3; y++) {
+						bw.write(top_words[v][k][y] + "\t");
+					}
+				}
+				bw.write("\r\n");
+			}
+			bw.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
 	
 	public void writeModels(String path) {
@@ -403,6 +463,7 @@ public class TopicSentimentMixture {
 		writePhi(path + "\\phi.models");
 		writeDelta(path + "\\delta.models");
 		writeLambda(path + "\\lambda.models");
+		writeTopWord(path + "\\top_words.csv", 20);
 	}
 	
 	public ArrayList<ArrayList<Pair>> prepare_data() {
@@ -453,20 +514,20 @@ public class TopicSentimentMixture {
 	}
 
 	public static void main(String[] args) {
-
-		
 		
 		TopicSentimentMixture model = new TopicSentimentMixture();
 //		Change you path bellow
-		LoadDocsFromFile load_data = new LoadDocsFromFile("Bitterlemons.docs", "Bitterlemons.words");
+//		LoadDocsFromFile load_data = new LoadDocsFromFile("E:\\OneDrive\\With_TAnh\\collaborative_work\\data\\Bitterlemons.docs", "E:\\OneDrive\\With_TAnh\\collaborative_work\\data\\Bitterlemons.words");
+		LoadDocsFromFile load_data = new LoadDocsFromFile("E:\\OneDrive\\With_TAnh\\collaborative_work\\data\\ap.docs", "E:\\OneDrive\\With_TAnh\\collaborative_work\\data\\ap.words");
 		load_data.load();
-		model.initialize_new(load_data.getDocs(), 200, 4451);
+		model.initialize_new(load_data.getDocs(), 100, load_data.getWordDict());
 //		or
 //		model.initialize_new(model.prepare_data(), 2, 8); // This line using sample data
-		
+	
 		model.estimate(100);
 //		Change you path bellow
-		model.writeModels("Path");
+		model.writeModels("E:\\OneDrive\\With_TAnh\\models\\ap");
+		
 //		model.printModel();
 	}
 
