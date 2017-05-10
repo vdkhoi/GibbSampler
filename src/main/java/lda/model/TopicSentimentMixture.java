@@ -214,17 +214,17 @@ public class TopicSentimentMixture {
 				
 				p[3 * k + 1] = ((totalWordByX[x] + sigma) / (totalWordInstance + Two_Sigma))
 						* ((doc_topic_matrix[m][k] + alpha) / (totalWordInDocByX[m][x] + Topic_Alpha))
-						* ((doc_y_topic_matrix[m][0][k] + mu) / (totalWordInDocByX[m][x] + Three_Mu))
+						* ((doc_y_topic_matrix[m][0][k] + mu) / (doc_y_topic_matrix[m][0][k] + doc_y_topic_matrix[m][1][k] + doc_y_topic_matrix[m][2][k] + Three_Mu))
 						* ((topic_y_word_matrix[k][0][word] + beta) / (totalWordInTopicByY[k][0] + Word_Beta));
 	
 				p[3 * k + 2] = ((totalWordByX[x] + sigma) / (totalWordInstance + Two_Sigma))
 						* ((doc_topic_matrix[m][k] + alpha) / (totalWordInDocByX[m][x] + Topic_Alpha))
-						* ((doc_y_topic_matrix[m][1][k] + mu) / (totalWordInDocByX[m][x] + Three_Mu))
+						* ((doc_y_topic_matrix[m][1][k] + mu) / (doc_y_topic_matrix[m][0][k] + doc_y_topic_matrix[m][1][k] + doc_y_topic_matrix[m][2][k] + Three_Mu))
 						* ((topic_y_word_matrix[k][1][word] + beta) / (totalWordInTopicByY[k][1] + Word_Beta));
 	
 				p[3 * k + 3] = ((totalWordByX[x] + sigma) / (totalWordInstance + Two_Sigma))
 						* ((doc_topic_matrix[m][k] + alpha) / (totalWordInDocByX[m][x] + Topic_Alpha))
-						* ((doc_y_topic_matrix[m][2][k] + mu) / (totalWordInDocByX[m][x] + Three_Mu))
+						* ((doc_y_topic_matrix[m][2][k] + mu) / (doc_y_topic_matrix[m][0][k] + doc_y_topic_matrix[m][1][k] + doc_y_topic_matrix[m][2][k] + Three_Mu))
 						* ((topic_y_word_matrix[k][2][word] + beta) / (totalWordInTopicByY[k][2] + Word_Beta));
 				
 				topic_y_word_matrix[z][y][word] += 1;

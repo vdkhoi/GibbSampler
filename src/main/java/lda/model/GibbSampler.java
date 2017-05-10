@@ -1,5 +1,8 @@
 package lda.model;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 
 //This code base on "Parameter Estimation for Text Analysis"
@@ -45,6 +48,8 @@ public class GibbSampler {
 	int V; // Number of words
 	int K; // Number of topics
 	
+	String[] wordDict;
+	
 	double alpha;
 	double beta = 0.01;
 
@@ -88,8 +93,6 @@ public class GibbSampler {
 					topic = (int) Math.floor(Math.random() * K);
 					Pair p = new Pair(topic, v); // Left: topic. Right: word
 					topicOfWordInDoc[m].add(p);
-					topic_len[topic]++;
-					doc_len[m]++;
 				}
 			}
 		}
@@ -97,10 +100,11 @@ public class GibbSampler {
 		buildMatrices();
 	}
 	
-	public void initialize_new(ArrayList<Pair>[] docFreqMatrix, int num_topic, int term_set_size) {
-		V = term_set_size;
-		M = docFreqMatrix.length;
+	public void initialize_new(ArrayList<ArrayList<Pair>> docFreqMatrix, int num_topic, String[] word_list) {
+		V = word_list.length;
+		M = docFreqMatrix.size();
 		K = num_topic;
+		this.wordDict = word_list;
 		this.phi = new double[K][V];
 		this.theta = new double[M][K];
 		this.topicOfWordInDoc = new ArrayList[M];
@@ -115,15 +119,13 @@ public class GibbSampler {
 
 		for (int m = 0; m < M; m++) {
 			int topic;
-			topicOfWordInDoc[m] = new ArrayList<Pair>();
-			for (int word_in_doc = 0; word_in_doc < docFreqMatrix[m].size(); word_in_doc++) {
-				Pair word_frequency = docFreqMatrix[m].get(word_in_doc);
-				for (int count = 0; count < word_frequency.getLeft(); count++) {   //Left: frequency; Right: word
+			topicOfWordInDoc[m] = new ArrayList<Pair>(docFreqMatrix.get(m).size());
+			for (int word_in_doc = 0; word_in_doc < docFreqMatrix.get(m).size(); word_in_doc++) {
+				Pair word_frequency_pair = docFreqMatrix.get(m).get(word_in_doc);
+				for (int count = 0; count < word_frequency_pair.getLeft(); count++) {   //Left: frequency; Right: word
 					topic = (int) Math.floor(Math.random() * K);
-					Pair p = new Pair(topic, word_frequency.getRight()); // Left: topic. Right: word
+					Pair p = new Pair(topic, word_frequency_pair.getRight()); // Left: topic. Right: word
 					topicOfWordInDoc[m].add(p);
-					topic_len[topic]++;
-					doc_len[m]++;
 				}
 			}
 		}
@@ -139,6 +141,8 @@ public class GibbSampler {
 				int word = topicOfWordInDoc[m].get(k).getRight();
 				topic_word_matrix[topic][word]++;
 				doc_topic_matrix[m][topic]++;
+				topic_len[topic]++;
+				doc_len[m]++;
 			}
 		}
 	}
@@ -226,6 +230,64 @@ public class GibbSampler {
 
 	}
 	
+	private int findMinIndex(int[] index_list, int k){
+		double min = phi[k][index_list[0]];
+		int index = 0;
+		for (int i = 1; i < index_list.length; i++){
+			if (phi[k][index_list[i]] < min) {
+				min = phi[k][index_list[i]];
+				index = i;
+			}
+		}
+		return index;
+	}
+	
+	public void writeTopWord(String file, int num) {
+		try {
+			String[][] top_words = new String[num][K];
+			for (int k = 0; k < K; k++) {
+				int[] index_of_num = new int[num];
+				for (int v = 0; v < num; v++) {
+					index_of_num[v] = v;
+				}
+
+				for (int v = num; v < V; v++) {
+					int min_idx = findMinIndex(index_of_num, k);
+					if (phi[k][v] > phi[k][index_of_num[min_idx]]) {
+						index_of_num[min_idx] = v;
+					}
+				}
+
+				// System.out.println("Topic k = " + k + " and y = " + y);
+				for (int v = 19; v > -1; v--) {
+					int min_idx = findMinIndex(index_of_num, k);
+					top_words[v][k] = wordDict[index_of_num[min_idx]] + "("
+							+ index_of_num[min_idx] + "-"
+							+ phi[k][index_of_num[min_idx]] + ")";
+					// System.out.println(top_words[v][k][y]);
+					phi[k][index_of_num[min_idx]] = 10000000000.0;
+				}
+
+			}
+
+			BufferedWriter bw = new BufferedWriter(new FileWriter(
+					new File(file)));
+			for (int v = 0; v < num; v++) {
+				for (int k = 0; k < K; k++) {
+
+					bw.write(top_words[v][k] + "\t");
+
+				}
+				bw.write("\r\n");
+			}
+			bw.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	
 	public void testQuery(int idx1, int idx2){
 		double[] query = new double[K];
 		for (int idx = 0; idx < K; idx ++)
@@ -273,16 +335,20 @@ public class GibbSampler {
 		GibbSampler model = new GibbSampler();
 		
 		
-		model.initialize_new(model.prepare_data(), 2, 8);
+//		model.initialize_new(model.prepare_data(), 2, 8);
 //		or
 //		model.initialize_new(example, 2, 8);
 		
-		model.estimate(1000);
+		
+		LoadDocsFromFile load_data = new LoadDocsFromFile("E:\\OneDrive\\With_TAnh\\collaborative_work\\data\\ap.docs", "E:\\OneDrive\\With_TAnh\\collaborative_work\\data\\ap.words");
+		load_data.load();
+		model.initialize_new(load_data.getDocs(), 100, load_data.getWordDict());
+		
+		model.estimate(100);
+		model.writeTopWord("E:\\OneDrive\\With_TAnh\\models\\LDA\\top_words.csv", 20);
 		model.printModel();
 		
-		model.testQuery(0, 1);
 		
-		model.testQuery(3, 5);
 	}
 
 }
